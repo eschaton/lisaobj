@@ -4,10 +4,12 @@
 //  Copyright © 2026 Christopher M. Hanson. All rights reserved.
 //  See file COPYING for details.
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <sysexits.h>
 
 #include "endian_utils.h"
@@ -18,24 +20,33 @@
 LISA_SOURCE_BEGIN
 
 
+char *program_name = NULL;
+
+
 void
-PrintUsage(void)
+print_usage(const char *errstr)
 {
-	fprintf(stderr, "Error!" "\n");
+    fprintf(stderr, "An error occurred: %s" "\n", errstr);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Usage:" "\n");
+    fprintf(stderr, " %s object-file" "\n", program_name);
 }
 
 
 int
 main(int argc, char **argv)
 {
+    program_name = argv[0];
+
     if (argc < 2) {
-        PrintUsage();
+        print_usage("Insufficient arguments");
         return EX_USAGE;
     }
 
     lisa_objfile *ef = lisa_objfile_open(argv[1]);
     if (ef == NULL) {
-        PrintUsage();
+        const char *errstr = strerror(errno);
+        print_usage(errstr);
         return EX_NOINPUT;
     }
 
