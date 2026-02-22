@@ -44,7 +44,7 @@ struct lisa_obj_block {
  - WARNING: Caller must free with `lisa_obj_block_free`.
  */
 lisa_obj_block * _Nullable
-lisa_obj_block_copy_next(lisa_objfile *ef);
+lisa_obj_block_copy_next(lisa_objfile *of);
 
 
 /*! Free the given object file block. */
@@ -62,11 +62,11 @@ lisa_obj_block_swap(lisa_obj_block *block);
 lisa_objfile * _Nullable
 lisa_objfile_open(const char * _Nonnull path)
 {
-    lisa_objfile *ef;
+    lisa_objfile *of;
     FILE *f = NULL;
 
-    ef = calloc(sizeof(lisa_objfile), 1);
-    if (ef == NULL) goto error;
+    of = calloc(sizeof(lisa_objfile), 1);
+    if (of == NULL) goto error;
 
     // Read the entire file into a contiguous buffer, to support
     // chasing of FileAddr offsets within its data structures.
@@ -80,29 +80,29 @@ lisa_objfile_open(const char * _Nonnull path)
     off_t fs = ftello(f);
     if (fs == -1) goto error;
 
-    ef->content_size = (size_t)fs;
+    of->content_size = (size_t)fs;
 
     int seek2_err = fseeko(f, 0, SEEK_SET);
     if (seek2_err == -1) goto error;
 
-    ef->content = calloc(ef->content_size, 1);
-    if (ef->content == NULL) goto error;
+    of->content = calloc(of->content_size, 1);
+    if (of->content == NULL) goto error;
 
-    size_t read_items = fread(ef->content, ef->content_size, 1, f);
+    size_t read_items = fread(of->content, of->content_size, 1, f);
     if (read_items != 1) goto error;
 
     // Now create representations of all of the data structures in it.
 
-    ef->blocks = ptr_array_create(8);
-    if (ef->blocks == NULL) goto error;
+    of->blocks = ptr_array_create(8);
+    if (of->blocks == NULL) goto error;
 
-    ef->read_offset = 0;
+    of->read_offset = 0;
 
     lisa_obj_block *block;
     do {
-        block = lisa_obj_block_copy_next(ef);
+        block = lisa_obj_block_copy_next(of);
         if (block) {
-            ptr_array_append(ef->blocks, block);
+            ptr_array_append(of->blocks, block);
         }
 
         // The file will be padded to page size, so stop once a logical
@@ -113,11 +113,11 @@ lisa_objfile_open(const char * _Nonnull path)
     fclose(f);
     f = NULL;
 
-    return ef;
+    return of;
 
 error:
     if (f) fclose(f);
-    lisa_objfile_close(ef);
+    lisa_objfile_close(of);
     return NULL;
 }
 
@@ -142,9 +142,9 @@ lisa_objfile_close(lisa_objfile * _Nullable ef)
 
 
 lisa_integer
-lisa_objfile_block_count(lisa_objfile *ef)
+lisa_objfile_block_count(lisa_objfile *of)
 {
-    size_t count = ptr_array_count(ef->blocks);
+    size_t count = ptr_array_count(of->blocks);
     assert(count <= INT16_MAX);
 
     return (lisa_integer)count;
@@ -152,9 +152,9 @@ lisa_objfile_block_count(lisa_objfile *ef)
 
 
 lisa_obj_block *
-lisa_objfile_block_at_index(lisa_objfile *ef, lisa_integer idx)
+lisa_objfile_block_at_index(lisa_objfile *of, lisa_integer idx)
 {
-    return ptr_array_item_at_index(ef->blocks, (size_t)idx);
+    return ptr_array_item_at_index(of->blocks, (size_t)idx);
 }
 
 
@@ -222,36 +222,36 @@ lisa_obj_block_free(lisa_obj_block * _Nullable b)
 
 
 int
-lisa_obj_read_raw(lisa_objfile *ef, void *buf, size_t size)
+lisa_obj_read_raw(lisa_objfile *of, void *buf, size_t size)
 {
-    uint8_t *content = ef->content;
+    uint8_t *content = of->content;
 
-    if ((ef->read_offset + size) > ef->content_size) {
+    if ((of->read_offset + size) > of->content_size) {
         errno = EIO;
         return -1;
     }
 
-    memcpy(buf, &content[ef->read_offset], size);
+    memcpy(buf, &content[of->read_offset], size);
 
-    ef->read_offset += size;
+    of->read_offset += size;
 
     return 0;
 }
 
 lisa_obj_block * _Nullable
-lisa_obj_block_copy_next(lisa_objfile *ef)
+lisa_obj_block_copy_next(lisa_objfile *of)
 {
     lisa_obj_block *block = NULL;
     uint8_t buf[4];
 
     // Save the pre-read block offset.
 
-    size_t offset = ef->read_offset;
+    size_t offset = of->read_offset;
     if (offset > INT32_MAX) goto error;
 
     // Read the block type and size.
 
-    int read_err = lisa_obj_read_raw(ef, buf, 4);
+    int read_err = lisa_obj_read_raw(of, buf, 4);
     if (read_err == -1) goto error;
 
     // Make room for new processed block.
@@ -262,12 +262,12 @@ lisa_obj_block_copy_next(lisa_objfile *ef)
     block->offset = (lisa_FileAddr)offset;
     block->type = (lisa_obj_block_type)buf[0];
     block->size = ((buf[1] << 16) | (buf[2] << 8) | (buf[3] << 0));
-    block->objfile = ef;
+    block->objfile = of;
 
     // size includes header but data does not
-    uint8_t *content_bytes = ef->content;
-    block->data = &content_bytes[ef->read_offset];
-    ef->read_offset += (size_t) block->size - 4;
+    uint8_t *content_bytes = of->content;
+    block->data = &content_bytes[of->read_offset];
+    of->read_offset += (size_t) block->size - 4;
 
     // Swap the block data if necessary.
 

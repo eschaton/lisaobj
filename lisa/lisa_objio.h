@@ -327,17 +327,17 @@ lisa_objfile_open(const char * _Nonnull path);
 /*! Close the given Lisa executable/object file. */
 LISA_EXTERN
 void
-lisa_objfile_close(lisa_objfile * _Nullable ef);
+lisa_objfile_close(lisa_objfile * _Nullable of);
 
 /*! Get the count of blocks in the object file. */
 LISA_EXTERN
 lisa_integer
-lisa_objfile_block_count(lisa_objfile *ef);
+lisa_objfile_block_count(lisa_objfile *of);
 
 /*! Get the block at the given index. */
 LISA_EXTERN
 lisa_obj_block *
-lisa_objfile_block_at_index(lisa_objfile *ef, lisa_integer idx);
+lisa_objfile_block_at_index(lisa_objfile *of, lisa_integer idx);
 
 /*! A pointer to some data at the given offset within the file. */
 LISA_EXTERN
