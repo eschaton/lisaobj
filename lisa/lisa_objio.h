@@ -318,6 +318,7 @@ typedef struct lisa_objfile lisa_objfile;
 struct lisa_obj_block;
 typedef struct lisa_obj_block lisa_obj_block;
 
+
 /*! Open the given Lisa executable/object file for reading. */
 LISA_EXTERN
 lisa_objfile * _Nullable
@@ -338,30 +339,24 @@ LISA_EXTERN
 lisa_obj_block *
 lisa_objfile_block_at_index(lisa_objfile *ef, lisa_integer idx);
 
-/*! An offset adjusted to be relative to the start of a block's data. */
-LISA_EXTERN
-lisa_FileAddr
-lisa_obj_block_offset_adjusted(lisa_obj_block *block,
-                               lisa_FileAddr file_offset);
-
-/*! A pointer to the data at the given offset within the block. */
+/*! A pointer to some data at the given offset within the file. */
 LISA_EXTERN
 void *
-lisa_obj_block_data_at_offset(lisa_obj_block *block,
-                              lisa_FileAddr block_offset);
+lisa_objfile_data_at_offset(lisa_objfile *of,
+                            lisa_FileAddr file_offset);
 
 /*!
-	Gets the Pascal string at the given offset within the file, as a C
-    string.
+	Gets the Pascal string at \a offset within object file \a of, into
+	\a cstr as a C string.
 
-    - WARNING: `pstr` must be large enough to accommodate the string;
-               the safest thing is to just use a 256-byte buffer.
+	- WARNING: `cstr` must be large enough to accommodate the string;
+			   the safest thing is to just use a 256-byte buffer.
  */
 LISA_EXTERN
 void
-lisa_obj_block_copy_pstring_at_offset(lisa_obj_block *block,
-                                      char *pstr,
-                                      lisa_FileAddr block_offset);
+lisa_objfile_copy_pstring_at_offset(lisa_objfile *of,
+                                    char *cstr,
+                                    lisa_FileAddr offset);
 
 /*! Dump the contents of a block to `stdout`. */
 LISA_EXTERN

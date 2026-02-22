@@ -31,9 +31,10 @@ struct lisa_objfile {
 
 struct lisa_obj_block {
     lisa_obj_block_type	type;
-    lisa_longint		size;				//!< total size including 4-byte header
-    lisa_FileAddr		offset;				//!< offset into objfile of header
-    void				* _Nullable data;	//!< skips header, points into objfile.content
+    lisa_longint		size;					//!< total size including 4-byte header
+    lisa_FileAddr		offset;					//!< offset into objfile of header
+    void				* _Nullable data;		//!< skips header, points into objfile.content
+    lisa_objfile		* _Nullable objfile;	//!< backpointer into containing objfile
 };
 
 
@@ -261,6 +262,7 @@ lisa_obj_block_copy_next(lisa_objfile *ef)
     block->offset = (lisa_FileAddr)offset;
     block->type = (lisa_obj_block_type)buf[0];
     block->size = ((buf[1] << 16) | (buf[2] << 8) | (buf[3] << 0));
+    block->objfile = ef;
 
     // size includes header but data does not
     uint8_t *content_bytes = ef->content;
@@ -285,32 +287,16 @@ error:
 }
 
 
-lisa_FileAddr
-lisa_obj_block_offset_adjusted(lisa_obj_block *block,
-                                lisa_FileAddr file_offset)
-{
-    return file_offset - block->offset - 4;
-}
-
-
-void *
-lisa_obj_block_data_at_offset(lisa_obj_block *block,
-                               lisa_FileAddr block_offset)
-{
-    uint8_t *d = block->data;
-    return &d[block_offset];
-}
-
-
 void
-lisa_obj_block_copy_pstring_at_offset(lisa_obj_block *block,
-                                       char *pstr,
-                                       lisa_FileAddr block_offset)
+lisa_objfile_copy_pstring_at_offset(lisa_objfile *of,
+                                    char *cstr,
+                                    lisa_FileAddr offset)
 {
-    char *pstr_in_block = lisa_obj_block_data_at_offset(block, block_offset);
-    size_t len = (size_t)*pstr_in_block;
-    memcpy(pstr, &pstr_in_block[1], len);
-    pstr[len] = '\0';
+    char *content_chars = of->content;
+    char *pstr_in_block = &content_chars[offset];
+    size_t len = (size_t)pstr_in_block[0];
+    memcpy(cstr, &pstr_in_block[1], len);
+    cstr[len] = '\0';
 }
 
 
@@ -799,10 +785,8 @@ lisa_obj_block_dump(lisa_obj_block *block)
                 fprintf(stdout, "\t\t" "FileNumber: %d" "\n", stringblock->variants[i].FileNumber);
                 fprintf(stdout, "\t\t" "NameAddr: %d" "\n", stringblock->variants[i].NameAddr);
 
-                lisa_FileAddr nameOffset = lisa_obj_block_offset_adjusted(block, stringblock->variants[i].NameAddr);
-
                 char str[256];
-                lisa_obj_block_copy_pstring_at_offset(block, str, nameOffset);
+                lisa_objfile_copy_pstring_at_offset(block->objfile, str, stringblock->variants[i].NameAddr);
 
                 fprintf(stdout, "\t\t" "Name: '%s'" "\n", str);
 
