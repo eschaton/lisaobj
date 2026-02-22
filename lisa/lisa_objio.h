@@ -48,16 +48,6 @@ const char *
 lisa_obj_block_type_string(lisa_obj_block_type t);
 
 
-/*! A block within a Lisa executable/object file. */
-struct lisa_obj_block {
-    lisa_obj_block_type	type;
-    lisa_longint		size;
-    lisa_FileAddr		offset;
-    void				* _Nullable data;
-};
-typedef struct lisa_obj_block lisa_obj_block;
-
-
 /*! A module name block. ($80) */
 struct lisa_ModuleName {
     lisa_ObjName		ModuleName;
@@ -322,6 +312,11 @@ typedef struct lisa_OSData lisa_OSData;
 /*! A Lisa executable/object file. (Opaque!) */
 struct lisa_objfile;
 typedef struct lisa_objfile lisa_objfile;
+
+
+/*! A block within a Lisa executable/object file. (Opaque!) */
+struct lisa_obj_block;
+typedef struct lisa_obj_block lisa_obj_block;
 
 /*! Open the given Lisa executable/object file for reading. */
 LISA_EXTERN

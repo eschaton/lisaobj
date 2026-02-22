@@ -7,6 +7,7 @@
 #include "lisa_objio.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,9 +23,19 @@ LISA_SOURCE_BEGIN
 // MARK: - Internals
 
 struct lisa_objfile {
-    FILE			* _Nullable file;
+    void			* _Nullable content;
+    size_t			content_size;
     ptr_array		* _Nullable blocks;
+    size_t			read_offset;			//!< used while iterating blocks
 };
+
+struct lisa_obj_block {
+    lisa_obj_block_type	type;
+    lisa_longint		size;				//!< total size including 4-byte header
+    lisa_FileAddr		offset;				//!< offset into objfile of header
+    void				* _Nullable data;	//!< skips header, points into objfile.content
+};
+
 
 /*!
  Copy the next block from the given object file.
@@ -51,15 +62,40 @@ lisa_objfile * _Nullable
 lisa_objfile_open(const char * _Nonnull path)
 {
     lisa_objfile *ef;
+    FILE *f = NULL;
 
     ef = calloc(sizeof(lisa_objfile), 1);
     if (ef == NULL) goto error;
 
-    ef->file = fopen(path, "rb");
-    if (ef->file == NULL) goto error;
+    // Read the entire file into a contiguous buffer, to support
+    // chasing of FileAddr offsets within its data structures.
+
+    f = fopen(path, "rb");
+    if (f == NULL) goto error;
+
+    int seek1_err = fseeko(f, 0, SEEK_END);
+    if (seek1_err == -1) goto error;
+
+    off_t fs = ftello(f);
+    if (fs == -1) goto error;
+
+    ef->content_size = (size_t)fs;
+
+    int seek2_err = fseeko(f, 0, SEEK_SET);
+    if (seek2_err == -1) goto error;
+
+    ef->content = calloc(ef->content_size, 1);
+    if (ef->content == NULL) goto error;
+
+    size_t read_items = fread(ef->content, ef->content_size, 1, f);
+    if (read_items != 1) goto error;
+
+    // Now create representations of all of the data structures in it.
 
     ef->blocks = ptr_array_create(8);
     if (ef->blocks == NULL) goto error;
+
+    ef->read_offset = 0;
 
     lisa_obj_block *block;
     do {
@@ -73,9 +109,13 @@ lisa_objfile_open(const char * _Nonnull path)
         // physical EOF.
     } while ((block != NULL) && (block->type != EOFMark));
 
+    fclose(f);
+    f = NULL;
+
     return ef;
 
 error:
+    if (f) fclose(f);
     lisa_objfile_close(ef);
     return NULL;
 }
@@ -85,9 +125,7 @@ void
 lisa_objfile_close(lisa_objfile * _Nullable ef)
 {
     if (ef) {
-        if (ef->file) {
-            fclose(ef->file);
-        }
+        free(ef->content);
 
         if (ef->blocks) {
             for (size_t b = 0; b < ptr_array_count(ef->blocks); b++) {
@@ -96,6 +134,7 @@ lisa_objfile_close(lisa_objfile * _Nullable ef)
             }
             ptr_array_free(ef->blocks);
         }
+
         free(ef);
     }
 }
@@ -177,32 +216,44 @@ lisa_UnitType_string(lisa_UnitType t)
 void
 lisa_obj_block_free(lisa_obj_block * _Nullable b)
 {
-    if (b != NULL) {
-        free(b->data);
-        free(b);
-    }
+    free(b);
 }
 
+
+int
+lisa_obj_read_raw(lisa_objfile *ef, void *buf, size_t size)
+{
+    uint8_t *content = ef->content;
+
+    if ((ef->read_offset + size) > ef->content_size) {
+        errno = EIO;
+        return -1;
+    }
+
+    memcpy(buf, &content[ef->read_offset], size);
+
+    ef->read_offset += size;
+
+    return 0;
+}
 
 lisa_obj_block * _Nullable
 lisa_obj_block_copy_next(lisa_objfile *ef)
 {
     lisa_obj_block *block = NULL;
-    size_t items_read;
     uint8_t buf[4];
 
     // Save the pre-read block offset.
 
-    off_t offset = ftello(ef->file);
-    if (offset == -1) goto error;
+    size_t offset = ef->read_offset;
     if (offset > INT32_MAX) goto error;
 
     // Read the block type and size.
 
-    items_read = fread(buf, 4, 1, ef->file);
-    if (items_read != 1) goto error;
+    int read_err = lisa_obj_read_raw(ef, buf, 4);
+    if (read_err == -1) goto error;
 
-    // Make room for the processed block.
+    // Make room for new processed block.
 
     block = calloc(sizeof(lisa_obj_block), 1);
     if (block == NULL) goto error;
@@ -210,21 +261,21 @@ lisa_obj_block_copy_next(lisa_objfile *ef)
     block->offset = (lisa_FileAddr)offset;
     block->type = (lisa_obj_block_type)buf[0];
     block->size = ((buf[1] << 16) | (buf[2] << 8) | (buf[3] << 0));
+
     // size includes header but data does not
+    uint8_t *content_bytes = ef->content;
+    block->data = &content_bytes[ef->read_offset];
+    ef->read_offset += (size_t) block->size - 4;
 
-    if (block->size > 4) {
-        block->data = calloc((size_t)block->size - 4, 1);
-        if (block->data == NULL) goto error;
+    // Swap the block data if necessary.
 
-        // Read the block data.
-
-        items_read = fread(block->data, (size_t)block->size - 4, 1, ef->file);
-        if (items_read != 1) goto error;
-
-        // Swap the block data.
-
-        lisa_obj_block_swap(block);
-    }
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    lisa_obj_block_swap(block);
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    // No swapping necessary.
+#else
+#error PDP-11 not supported
+#endif
 
     return block;
 
