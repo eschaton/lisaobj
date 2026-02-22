@@ -796,9 +796,8 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case OSData: {
-            // Haven't been able to find any information about what
-            // might be in this.
-            dumphex(block->data, (size_t) block->size - 4, stdout);
+            lisa_OSData *osdata = block->data;
+            dumphex(osdata->bitmap, 16, stdout);
         } break;
 
         case EOFMark: {

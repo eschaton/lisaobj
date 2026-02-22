@@ -313,6 +313,12 @@ struct lisa_PackTable {
 } LISA_PACKED;
 typedef struct lisa_PackTable lisa_PackTable;
 
+/*! A Lisa executable's OS data. ($B2) */
+struct lisa_OSData {
+    uint8_t				bitmap[16];		//!< bitmap of segments to preload
+} LISA_PACKED;
+typedef struct lisa_OSData lisa_OSData;
+
 /*! A Lisa executable/object file. (Opaque!) */
 struct lisa_objfile;
 typedef struct lisa_objfile lisa_objfile;
