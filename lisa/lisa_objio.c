@@ -34,7 +34,29 @@ struct lisa_obj_block {
     lisa_obj_block_type	type;
     lisa_longint		size;					//!< total size including 4-byte header
     lisa_FileAddr		offset;					//!< offset into objfile of header
-    void				* _Nullable data;		//!< skips header, points into objfile.content
+    union {										//!< skips header, points into objfile.content
+        void					* LISA_NULLABLE data;
+        lisa_ModuleName			* LISA_NULLABLE ModuleName;
+        lisa_EndBlock			* LISA_NULLABLE EndBlock;
+        lisa_EntryPoint			* LISA_NULLABLE EntryPoint;
+        lisa_External			* LISA_NULLABLE External;
+        lisa_StartAddress		* LISA_NULLABLE StartAddress;
+        lisa_CodeBlock			* LISA_NULLABLE CodeBlock;
+        lisa_Relocation			* LISA_NULLABLE Relocation;
+        lisa_CommonRelocation	* LISA_NULLABLE CommonRelocation;
+        lisa_ShortExternal		* LISA_NULLABLE ShortExternal;
+        lisa_UnitBlock			* LISA_NULLABLE UnitBlock;
+        lisa_Executable			* LISA_NULLABLE Executable;
+        lisa_VersionCtrl		* LISA_NULLABLE VersionCtrl;
+        lisa_SegmentTable		* LISA_NULLABLE SegmentTable;
+        lisa_UnitTable			* LISA_NULLABLE UnitTable;
+        lisa_SegLocation		* LISA_NULLABLE SegLocation;
+        lisa_UnitLocation		* LISA_NULLABLE UnitLocation;
+        lisa_StringBlock		* LISA_NULLABLE StringBlock;
+        lisa_PackedCode			* LISA_NULLABLE PackedCode;
+        lisa_PackTable			* LISA_NULLABLE PackTable;
+        lisa_OSData				* LISA_NULLABLE OSData;
+    } content;
 };
 
 
@@ -266,7 +288,7 @@ lisa_obj_block_copy_next(lisa_objfile *of)
 
     // size includes header but data does not
     uint8_t *content_bytes = of->content;
-    block->data = &content_bytes[of->read_offset];
+    block->content.data = &content_bytes[of->read_offset];
     of->read_offset += (size_t) block->size - 4;
 
     // Swap the block data if necessary.
@@ -323,22 +345,22 @@ lisa_obj_block_swap(lisa_obj_block *block)
 {
     switch (block->type) {
         case ModuleName: {
-            lisa_ModuleName *modulename = block->data;
+            lisa_ModuleName *modulename = block->content.ModuleName;
             modulename->CSize = swap32be(modulename->CSize);
         } break;
 
         case EndBlock: {
-            lisa_EndBlock *endblock = block->data;
+            lisa_EndBlock *endblock = block->content.EndBlock;
             endblock->CSize = swap32be(endblock->CSize);
         } break;
 
         case EntryPoint: {
-            lisa_EntryPoint *entrypoint = block->data;
+            lisa_EntryPoint *entrypoint = block->content.EntryPoint;
             entrypoint->Loc = swap32be(entrypoint->Loc);
         } break;
 
         case External: {
-            lisa_External *external = block->data;
+            lisa_External *external = block->content.External;
             lisa_integer count = (lisa_integer)(((size_t)block->size - 12) / sizeof(lisa_SegAddr));
             for (lisa_integer i = 0; i < count; i++) {
                 external->Ref[i] = swap32be(external->Ref[i]);
@@ -346,18 +368,18 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case StartAddress: {
-            lisa_StartAddress *startaddress = block->data;
+            lisa_StartAddress *startaddress = block->content.StartAddress;
             startaddress->Start = swap32be(startaddress->Start);
             startaddress->GSize = swap32be(startaddress->GSize);
         } break;
 
         case CodeBlock: {
-            lisa_CodeBlock *codeblock = block->data;
+            lisa_CodeBlock *codeblock = block->content.CodeBlock;
             codeblock->Addr = swap32be(codeblock->Addr);
         } break;
 
         case Relocation: {
-            lisa_Relocation *relocation = block->data;
+            lisa_Relocation *relocation = block->content.Relocation;
             lisa_integer count = (lisa_integer)(((size_t)block->size - 4) / sizeof(lisa_SegAddr));
             for (lisa_integer i = 0; i < count; i++) {
                 relocation->Ref[i] = swap32be(relocation->Ref[i]);
@@ -365,7 +387,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case CommonRelocation: {
-            lisa_CommonRelocation *commonrelocation = block->data;
+            lisa_CommonRelocation *commonrelocation = block->content.CommonRelocation;
             lisa_integer count = (lisa_integer)(((size_t)block->size - 12) / sizeof(lisa_SegAddr));
             for (lisa_integer i = 0; i < count; i++) {
                 commonrelocation->Ref[i] = swap32be(commonrelocation->Ref[i]);
@@ -373,7 +395,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case ShortExternal: {
-            lisa_ShortExternal *shortexternal = block->data;
+            lisa_ShortExternal *shortexternal = block->content.ShortExternal;
             lisa_integer count = (lisa_integer)(((size_t)block->size - 20) / sizeof(lisa_integer));
             for (lisa_integer i = 0; i < count; i++) {
                 shortexternal->ShortRef[i] = swap16be(shortexternal->ShortRef[i]);
@@ -385,7 +407,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case UnitBlock: {
-            lisa_UnitBlock *unitblock = block->data;
+            lisa_UnitBlock *unitblock = block->content.UnitBlock;
             unitblock->CodeAddr = swap32be(unitblock->CodeAddr);
             unitblock->TextAddr = swap32be(unitblock->TextAddr);
             unitblock->TextSize = swap32be(unitblock->TextSize);
@@ -398,7 +420,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case Executable: {
-            lisa_Executable *executable = block->data;
+            lisa_Executable *executable = block->content.Executable;
             executable->JTLaddr = swap32be(executable->JTLaddr);
             executable->JTSize = swap32be(executable->JTSize);
             executable->DataSize = swap32be(executable->DataSize);
@@ -428,7 +450,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case VersionCtrl: {
-            lisa_VersionCtrl *versionctrl = block->data;
+            lisa_VersionCtrl *versionctrl = block->content.VersionCtrl;
             versionctrl->sysNum = swap32be(versionctrl->sysNum);
             versionctrl->minSys = swap32be(versionctrl->minSys);
             versionctrl->maxSys = swap32be(versionctrl->maxSys);
@@ -438,7 +460,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case SegmentTable: {
-            lisa_SegmentTable *segmenttable = block->data;
+            lisa_SegmentTable *segmenttable = block->content.SegmentTable;
             segmenttable->nSegments = swap16be(segmenttable->nSegments);
             for (lisa_integer i = 0; i < segmenttable->nSegments; i++) {
                 segmenttable->variants[i].SegNumber = swap16be(segmenttable->variants[i].SegNumber);
@@ -448,7 +470,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case UnitTable: {
-            lisa_UnitTable *unittable = block->data;
+            lisa_UnitTable *unittable = block->content.UnitTable;
             unittable->nUnits = swap16be(unittable->nUnits);
             unittable->maxunit = swap16be(unittable->maxunit);
 
@@ -459,7 +481,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case SegLocation: {
-            lisa_SegLocation *seglocation = block->data;
+            lisa_SegLocation *seglocation = block->content.SegLocation;
             seglocation->nSegments = swap16be(seglocation->nSegments);
             for (lisa_integer i = 0; i < seglocation->nSegments; i++) {
                 seglocation->variants[i].Version1 = swap32be(seglocation->variants[i].Version1);
@@ -472,7 +494,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case UnitLocation: {
-            lisa_UnitLocation *unitlocation = block->data;
+            lisa_UnitLocation *unitlocation = block->content.UnitLocation;
             unitlocation->nUnits = swap16be(unitlocation->nUnits);
             for (lisa_integer i = 0; i < unitlocation->nUnits; i++) {
                 unitlocation->variants[i].UnitNumber = swap16be(unitlocation->variants[i].UnitNumber);
@@ -481,7 +503,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case StringBlock: {
-            lisa_StringBlock *stringblock = block->data;
+            lisa_StringBlock *stringblock = block->content.StringBlock;
             stringblock->nStrings = swap16be(stringblock->nStrings);
             for (lisa_integer i = 0; i < stringblock->nStrings; i++) {
                 stringblock->variants[i].FileNumber = swap16be(stringblock->variants[i].FileNumber);
@@ -490,13 +512,13 @@ lisa_obj_block_swap(lisa_obj_block *block)
         } break;
 
         case PackedCode: {
-            lisa_PackedCode *packedcode = block->data;
+            lisa_PackedCode *packedcode = block->content.PackedCode;
             packedcode->addr = swap32be(packedcode->addr);
             packedcode->csize = swap32be(packedcode->csize);
         } break;
 
         case PackTable: {
-            lisa_PackTable *packtable = block->data;
+            lisa_PackTable *packtable = block->content.PackTable;
             packtable->packversion = swap32be(packtable->packversion);
         } break;
 
@@ -524,7 +546,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case ModuleName: {
             char buf[9];
 
-            lisa_ModuleName *modulename = block->data;
+            lisa_ModuleName *modulename = block->content.ModuleName;
             memset(buf, 0, 9);
             memcpy(buf, modulename->ModuleName, 8);
             fprintf(stdout, "\t" "ModuleName: '%s'" "\n", buf);
@@ -535,14 +557,14 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case EndBlock: {
-            lisa_EndBlock *endblock = block->data;
+            lisa_EndBlock *endblock = block->content.EndBlock;
             fprintf(stdout, "\t" "CSize: %d" "\n", endblock->CSize);
         } break;
 
         case EntryPoint: {
             char buf[9];
 
-            lisa_EntryPoint *entrypoint = block->data;
+            lisa_EntryPoint *entrypoint = block->content.EntryPoint;
             memset(buf, 0, 9);
             memcpy(buf, entrypoint->LinkName, 8);
             fprintf(stdout, "\t" "LinkName: '%s'" "\n", buf);
@@ -555,7 +577,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case External: {
             char buf[9];
 
-            lisa_External *external = block->data;
+            lisa_External *external = block->content.External;
             memset(buf, 0, 9);
             memcpy(buf, external->LinkName, 8);
             fprintf(stdout, "\t" "LinkName: '%s'" "\n", buf);
@@ -572,13 +594,13 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case StartAddress: {
-            lisa_StartAddress *startaddress = block->data;
+            lisa_StartAddress *startaddress = block->content.StartAddress;
             fprintf(stdout, "\t" "Start: $%08x" "\n", startaddress->Start);
             fprintf(stdout, "\t" "GSize: %d" "\n", startaddress->GSize);
         } break;
 
         case CodeBlock: {
-            lisa_CodeBlock *codeblock = block->data;
+            lisa_CodeBlock *codeblock = block->content.CodeBlock;
             fprintf(stdout, "\t" "Addr: $%08x" "\n", codeblock->Addr);
 
             lisa_longint size = block->size - 8; // header + Addr = 8
@@ -588,7 +610,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case Relocation: {
-            lisa_Relocation *relocation = block->data;
+            lisa_Relocation *relocation = block->content.Relocation;
             lisa_integer count = (lisa_integer)(((size_t)block->size - 4) / sizeof(lisa_SegAddr));
             fprintf(stdout, "\t" "nRefs: %d" "\n", count);
 
@@ -600,7 +622,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case CommonRelocation: {
             char buf[9];
 
-            lisa_CommonRelocation *commonrelocation = block->data;
+            lisa_CommonRelocation *commonrelocation = block->content.CommonRelocation;
             memset(buf, 0, 9);
             memcpy(buf, commonrelocation->CommonName, 8);
             fprintf(stdout, "\t" "CommonName: '%s'" "\n", buf);
@@ -616,7 +638,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case ShortExternal: {
             char buf[9];
 
-            lisa_ShortExternal *shortexternal = block->data;
+            lisa_ShortExternal *shortexternal = block->content.ShortExternal;
             memset(buf, 0, 9);
             memcpy(buf, shortexternal->LinkName, 8);
             fprintf(stdout, "\t" "LinkName: '%s'" "\n", buf);
@@ -640,7 +662,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case UnitBlock: {
             char buf[9];
 
-            lisa_UnitBlock *unitblock = block->data;
+            lisa_UnitBlock *unitblock = block->content.UnitBlock;
             memset(buf, 0, 9);
             memcpy(buf, unitblock->UnitName, 8);
             fprintf(stdout, "\t" "UnitName: '%s'" "\n", buf);
@@ -657,7 +679,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case Executable: {
-            lisa_Executable *executable = block->data;
+            lisa_Executable *executable = block->content.Executable;
             fprintf(stdout, "\t" "JTLaddr: $%08x" "\n", executable->JTLaddr);
             fprintf(stdout, "\t" "JTSize: %d" "\n", executable->JTSize);
             fprintf(stdout, "\t" "DataSize: %d" "\n", executable->DataSize);
@@ -691,7 +713,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case VersionCtrl: {
-            lisa_VersionCtrl *versionctrl = block->data;
+            lisa_VersionCtrl *versionctrl = block->content.VersionCtrl;
             fprintf(stdout, "\t" "sysNum: $%08x" "\n", versionctrl->sysNum);
             fprintf(stdout, "\t" "minSys: $%08x" "\n", versionctrl->minSys);
             fprintf(stdout, "\t" "maxSys: $%08x" "\n", versionctrl->maxSys);
@@ -703,7 +725,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case SegmentTable: {
             char buf[9];
 
-            lisa_SegmentTable *segmenttable = block->data;
+            lisa_SegmentTable *segmenttable = block->content.SegmentTable;
             fprintf(stdout, "\t" "nSegments: %d" "\n", segmenttable->nSegments);
 
             for (lisa_integer i = 0; i < segmenttable->nSegments; i++) {
@@ -721,7 +743,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case UnitTable: {
             char buf[9];
 
-            lisa_UnitTable *unittable = block->data;
+            lisa_UnitTable *unittable = block->content.UnitTable;
             fprintf(stdout, "\t" "nUnits: %d" "\n", unittable->nUnits);
             fprintf(stdout, "\t" "maxunit: %d" "\n", unittable->maxunit);
 
@@ -739,7 +761,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case SegLocation: {
             char buf[9];
 
-            lisa_SegLocation *seglocation = block->data;
+            lisa_SegLocation *seglocation = block->content.SegLocation;
             fprintf(stdout, "\t" "nSegments: %d" "\n", seglocation->nSegments);
 
             for (lisa_integer i = 0; i < seglocation->nSegments; i++) {
@@ -760,7 +782,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         case UnitLocation: {
             char buf[9];
 
-            lisa_UnitLocation *unitlocation = block->data;
+            lisa_UnitLocation *unitlocation = block->content.UnitLocation;
             fprintf(stdout, "\t" "nUnits: %d" "\n", unitlocation->nUnits);
 
             for (lisa_integer i = 0; i < unitlocation->nUnits; i++) {
@@ -777,7 +799,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case StringBlock: {
-            lisa_StringBlock *stringblock = block->data;
+            lisa_StringBlock *stringblock = block->content.StringBlock;
             fprintf(stdout, "\t" "nStrings: %d" "\n", stringblock->nStrings);
 
             for (lisa_integer i = 0; i < stringblock->nStrings; i++) {
@@ -795,7 +817,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case PackedCode: {
-            lisa_PackedCode *packedcode = block->data;
+            lisa_PackedCode *packedcode = block->content.PackedCode;
             fprintf(stdout, "\t" "addr: $%08x" "\n", packedcode->addr);
             fprintf(stdout, "\t" "csize: %d" "\n", packedcode->csize);
 
@@ -820,7 +842,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case PackTable: {
-            lisa_PackTable *packtable = block->data;
+            lisa_PackTable *packtable = block->content.PackTable;
             fprintf(stdout, "\t" "packversion: %d" "\n", packtable->packversion);
 
             if (packtable->packversion == 1) {
@@ -831,7 +853,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
         } break;
 
         case OSData: {
-            lisa_OSData *osdata = block->data;
+            lisa_OSData *osdata = block->content.OSData;
             dumphex(osdata->bitmap, 16, stdout);
         } break;
 
