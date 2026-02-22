@@ -19,7 +19,7 @@ struct ptr_array {
 };
 
 
-ptr_array * _Nullable
+ptr_array * UTILS_NULLABLE
 ptr_array_create(size_t capacity)
 {
     const size_t real_capacity = capacity > 0 ? capacity : 8;
@@ -42,7 +42,7 @@ error:
 
 
 void
-ptr_array_free(ptr_array * _Nullable array)
+ptr_array_free(ptr_array * UTILS_NULLABLE array)
 {
     if (array) {
         free(array->storage);

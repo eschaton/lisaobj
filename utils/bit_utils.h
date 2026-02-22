@@ -25,7 +25,7 @@ UTILS_HEADER_BEGIN
  */
 UTILS_EXTERN
 void
-dumphex(void * _Nonnull buf, size_t buf_size, FILE * _Nonnull f);
+dumphex(void *buf, size_t buf_size, FILE *f);
 
 
 UTILS_HEADER_END

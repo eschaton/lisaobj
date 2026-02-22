@@ -23,18 +23,18 @@ LISA_SOURCE_BEGIN
 // MARK: - Internals
 
 struct lisa_objfile {
-    void			* _Nullable content;
+    void			* LISA_NULLABLE content;
     size_t			content_size;
-    ptr_array		* _Nullable blocks;
+    ptr_array		* LISA_NULLABLE blocks;
     size_t			read_offset;			//!< used while iterating blocks
 };
 
 struct lisa_obj_block {
+    lisa_objfile        * LISA_NULLABLE objfile;    //!< backpointer into containing objfile
     lisa_obj_block_type	type;
     lisa_longint		size;					//!< total size including 4-byte header
     lisa_FileAddr		offset;					//!< offset into objfile of header
     void				* _Nullable data;		//!< skips header, points into objfile.content
-    lisa_objfile		* _Nullable objfile;	//!< backpointer into containing objfile
 };
 
 
@@ -43,13 +43,13 @@ struct lisa_obj_block {
 
  - WARNING: Caller must free with `lisa_obj_block_free`.
  */
-lisa_obj_block * _Nullable
+lisa_obj_block * LISA_NULLABLE
 lisa_obj_block_copy_next(lisa_objfile *of);
 
 
 /*! Free the given object file block. */
 void
-lisa_obj_block_free(lisa_obj_block * _Nullable b);
+lisa_obj_block_free(lisa_obj_block * LISA_NULLABLE b);
 
 
 /*! Swap the block's data from big-endian to native-endian. */
@@ -59,8 +59,8 @@ lisa_obj_block_swap(lisa_obj_block *block);
 
 // MARK: - Files
 
-lisa_objfile * _Nullable
-lisa_objfile_open(const char * _Nonnull path)
+lisa_objfile * LISA_NULLABLE
+lisa_objfile_open(const char *path)
 {
     lisa_objfile *of;
     FILE *f = NULL;
@@ -123,7 +123,7 @@ error:
 
 
 void
-lisa_objfile_close(lisa_objfile * _Nullable ef)
+lisa_objfile_close(lisa_objfile * LISA_NULLABLE ef)
 {
     if (ef) {
         free(ef->content);
@@ -160,7 +160,7 @@ lisa_objfile_block_at_index(lisa_objfile *of, lisa_integer idx)
 
 // MARK: - Blocks
 
-const char * _Nonnull
+const char *
 lisa_obj_block_type_string(lisa_obj_block_type t)
 {
     switch (t) {
@@ -215,7 +215,7 @@ lisa_UnitType_string(lisa_UnitType t)
 
 
 void
-lisa_obj_block_free(lisa_obj_block * _Nullable b)
+lisa_obj_block_free(lisa_obj_block * LISA_NULLABLE b)
 {
     free(b);
 }
@@ -238,7 +238,7 @@ lisa_obj_read_raw(lisa_objfile *of, void *buf, size_t size)
     return 0;
 }
 
-lisa_obj_block * _Nullable
+lisa_obj_block * LISA_NULLABLE
 lisa_obj_block_copy_next(lisa_objfile *of)
 {
     lisa_obj_block *block = NULL;
@@ -259,10 +259,10 @@ lisa_obj_block_copy_next(lisa_objfile *of)
     block = calloc(sizeof(lisa_obj_block), 1);
     if (block == NULL) goto error;
 
+    block->objfile = of;
     block->offset = (lisa_FileAddr)offset;
     block->type = (lisa_obj_block_type)buf[0];
     block->size = ((buf[1] << 16) | (buf[2] << 8) | (buf[3] << 0));
-    block->objfile = of;
 
     // size includes header but data does not
     uint8_t *content_bytes = of->content;
@@ -883,7 +883,7 @@ const uint16_t lisa_unpackcode_table[256] = {
 int
 lisa_unpackcode(uint8_t *packed, lisa_longint packed_size,
 				uint8_t *unpacked, lisa_longint unpacked_size,
-				lisa_PackTable * _Nullable table)
+				lisa_PackTable * LISA_NULLABLE table)
 {
     // Only support v1 tables.
     if (table && (table->packversion != 1)) return -1;

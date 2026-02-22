@@ -12,7 +12,7 @@ UTILS_SOURCE_BEGIN
 
 
 void
-dumphex(void * _Nonnull buf, size_t buf_size, FILE * _Nonnull f)
+dumphex(void *buf, size_t buf_size, FILE *f)
 {
     uint8_t *bufu = buf;
     bool endnl = true;

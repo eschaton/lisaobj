@@ -21,13 +21,13 @@ typedef struct ptr_array ptr_array;
 
 /*! Create a new pointer array with an initial capacity. */
 UTILS_EXTERN
-ptr_array * _Nullable
+ptr_array * UTILS_NULLABLE
 ptr_array_create(size_t capacity);
 
 /*! Free a pointer array. */
 UTILS_EXTERN
 void
-ptr_array_free(ptr_array * _Nullable array);
+ptr_array_free(ptr_array * UTILS_NULLABLE array);
 
 /*! Get the number of items in a pointer array. */
 UTILS_EXTERN

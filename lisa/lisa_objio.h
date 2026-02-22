@@ -321,13 +321,13 @@ typedef struct lisa_obj_block lisa_obj_block;
 
 /*! Open the given Lisa executable/object file for reading. */
 LISA_EXTERN
-lisa_objfile * _Nullable
-lisa_objfile_open(const char * _Nonnull path);
+lisa_objfile * LISA_NULLABLE
+lisa_objfile_open(const char *path);
 
 /*! Close the given Lisa executable/object file. */
 LISA_EXTERN
 void
-lisa_objfile_close(lisa_objfile * _Nullable of);
+lisa_objfile_close(lisa_objfile * LISA_NULLABLE of);
 
 /*! Get the count of blocks in the object file. */
 LISA_EXTERN
@@ -371,7 +371,7 @@ LISA_EXTERN
 int
 lisa_unpackcode(uint8_t *packed, lisa_longint packed_size,
                 uint8_t *unpacked, lisa_longint unpacked_size,
-                lisa_PackTable * _Nullable table);
+                lisa_PackTable * LISA_NULLABLE table);
 
 
 LISA_HEADER_END
