@@ -29,34 +29,12 @@ struct lisa_objfile {
     size_t			read_offset;			//!< used while iterating blocks
 };
 
-struct lisa_obj_block {
-    lisa_objfile        * LISA_NULLABLE objfile;    //!< backpointer into containing objfile
-    lisa_obj_block_type	type;
-    lisa_longint		size;					//!< total size including 4-byte header
-    lisa_FileAddr		offset;					//!< offset into objfile of header
-    union {										//!< skips header, points into objfile.content
-        void					* LISA_NULLABLE data;
-        lisa_ModuleName			* LISA_NULLABLE ModuleName;
-        lisa_EndBlock			* LISA_NULLABLE EndBlock;
-        lisa_EntryPoint			* LISA_NULLABLE EntryPoint;
-        lisa_External			* LISA_NULLABLE External;
-        lisa_StartAddress		* LISA_NULLABLE StartAddress;
-        lisa_CodeBlock			* LISA_NULLABLE CodeBlock;
-        lisa_Relocation			* LISA_NULLABLE Relocation;
-        lisa_CommonRelocation	* LISA_NULLABLE CommonRelocation;
-        lisa_ShortExternal		* LISA_NULLABLE ShortExternal;
-        lisa_UnitBlock			* LISA_NULLABLE UnitBlock;
-        lisa_Executable			* LISA_NULLABLE Executable;
-        lisa_VersionCtrl		* LISA_NULLABLE VersionCtrl;
-        lisa_SegmentTable		* LISA_NULLABLE SegmentTable;
-        lisa_UnitTable			* LISA_NULLABLE UnitTable;
-        lisa_SegLocation		* LISA_NULLABLE SegLocation;
-        lisa_UnitLocation		* LISA_NULLABLE UnitLocation;
-        lisa_StringBlock		* LISA_NULLABLE StringBlock;
-        lisa_PackedCode			* LISA_NULLABLE PackedCode;
-        lisa_PackTable			* LISA_NULLABLE PackTable;
-        lisa_OSData				* LISA_NULLABLE OSData;
-    } content;
+struct lisa_objfile_block {
+    lisa_objfile        	* LISA_NULLABLE objfile;    //!< backpointer into containing objfile
+    lisa_obj_block_type		type;
+    lisa_longint			size;						//!< total size including 4-byte header
+    lisa_FileAddr			offset;						//!< offset into objfile of header
+    lisa_objfile_content	content;
 };
 
 
@@ -65,18 +43,18 @@ struct lisa_obj_block {
 
  - WARNING: Caller must free with `lisa_obj_block_free`.
  */
-lisa_obj_block * LISA_NULLABLE
+lisa_objfile_block * LISA_NULLABLE
 lisa_obj_block_copy_next(lisa_objfile *of);
 
 
 /*! Free the given object file block. */
 void
-lisa_obj_block_free(lisa_obj_block * LISA_NULLABLE b);
+lisa_obj_block_free(lisa_objfile_block * LISA_NULLABLE b);
 
 
 /*! Swap the block's data from big-endian to native-endian. */
 void
-lisa_obj_block_swap(lisa_obj_block *block);
+lisa_obj_block_swap(lisa_objfile_block *block);
 
 
 // MARK: - Files
@@ -120,7 +98,7 @@ lisa_objfile_open(const char *path)
 
     of->read_offset = 0;
 
-    lisa_obj_block *block;
+    lisa_objfile_block *block;
     do {
         block = lisa_obj_block_copy_next(of);
         if (block) {
@@ -152,7 +130,7 @@ lisa_objfile_close(lisa_objfile * LISA_NULLABLE ef)
 
         if (ef->blocks) {
             for (size_t b = 0; b < ptr_array_count(ef->blocks); b++) {
-                lisa_obj_block *block = ptr_array_item_at_index(ef->blocks, b);
+                lisa_objfile_block *block = ptr_array_item_at_index(ef->blocks, b);
                 lisa_obj_block_free(block);
             }
             ptr_array_free(ef->blocks);
@@ -173,7 +151,7 @@ lisa_objfile_block_count(lisa_objfile *of)
 }
 
 
-lisa_obj_block *
+lisa_objfile_block *
 lisa_objfile_block_at_index(lisa_objfile *of, lisa_integer idx)
 {
     return ptr_array_item_at_index(of->blocks, (size_t)idx);
@@ -181,6 +159,24 @@ lisa_objfile_block_at_index(lisa_objfile *of, lisa_integer idx)
 
 
 // MARK: - Blocks
+
+lisa_obj_block_type
+lisa_objfile_block_type(lisa_objfile_block *block)
+{
+    return block->type;
+}
+
+lisa_longint
+lisa_objfile_block_size(lisa_objfile_block *block)
+{
+    return block->size;
+}
+
+lisa_objfile_content
+lisa_objfile_block_content(lisa_objfile_block *block)
+{
+    return block->content;
+}
 
 const char *
 lisa_obj_block_type_string(lisa_obj_block_type t)
@@ -237,7 +233,7 @@ lisa_UnitType_string(lisa_UnitType t)
 
 
 void
-lisa_obj_block_free(lisa_obj_block * LISA_NULLABLE b)
+lisa_obj_block_free(lisa_objfile_block * LISA_NULLABLE b)
 {
     free(b);
 }
@@ -260,10 +256,10 @@ lisa_obj_read_raw(lisa_objfile *of, void *buf, size_t size)
     return 0;
 }
 
-lisa_obj_block * LISA_NULLABLE
+lisa_objfile_block * LISA_NULLABLE
 lisa_obj_block_copy_next(lisa_objfile *of)
 {
-    lisa_obj_block *block = NULL;
+    lisa_objfile_block *block = NULL;
     uint8_t buf[4];
 
     // Save the pre-read block offset.
@@ -278,7 +274,7 @@ lisa_obj_block_copy_next(lisa_objfile *of)
 
     // Make room for new processed block.
 
-    block = calloc(sizeof(lisa_obj_block), 1);
+    block = calloc(sizeof(lisa_objfile_block), 1);
     if (block == NULL) goto error;
 
     block->objfile = of;
@@ -341,9 +337,9 @@ lisa_Executable_JTVariantTable(lisa_Executable *executable)
 
 
 void
-lisa_obj_block_swap(lisa_obj_block *block)
+lisa_obj_block_swap(lisa_objfile_block *block)
 {
-    switch (block->type) {
+    switch (lisa_objfile_block_type(block)) {
         case ModuleName: {
             lisa_ModuleName *modulename = block->content.ModuleName;
             modulename->CSize = swap32be(modulename->CSize);
@@ -534,7 +530,7 @@ lisa_obj_block_swap(lisa_obj_block *block)
 
 
 void
-lisa_obj_block_dump(lisa_obj_block *block)
+lisa_obj_block_dump(lisa_objfile_block *block)
 {
     // Print header info.
     fprintf(stdout, "%s ($%02X), offset %u, %u total bytes" "\n",
@@ -542,7 +538,7 @@ lisa_obj_block_dump(lisa_obj_block *block)
             block->offset, block->size);
 
     // Print block-specific info.
-    switch (block->type) {
+    switch (lisa_objfile_block_type(block)) {
         case ModuleName: {
             char buf[9];
 

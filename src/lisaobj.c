@@ -52,7 +52,7 @@ main(int argc, char **argv)
 
     const lisa_integer block_count = lisa_objfile_block_count(ef);
     for (lisa_integer b = 0; b < block_count; b++) {
-        lisa_obj_block *block = lisa_objfile_block_at_index(ef, b);
+        lisa_objfile_block *block = lisa_objfile_block_at_index(ef, b);
         lisa_obj_block_dump(block);
     }
 

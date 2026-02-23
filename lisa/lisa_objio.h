@@ -309,14 +309,42 @@ struct lisa_OSData {
 } LISA_PACKED;
 typedef struct lisa_OSData lisa_OSData;
 
+
+/*! The content of a Lisa object file block. */
+union lisa_objfile_content {
+    void                    * LISA_NULLABLE data;
+    lisa_ModuleName			* LISA_NULLABLE ModuleName;
+    lisa_EndBlock			* LISA_NULLABLE EndBlock;
+    lisa_EntryPoint			* LISA_NULLABLE EntryPoint;
+    lisa_External			* LISA_NULLABLE External;
+    lisa_StartAddress		* LISA_NULLABLE StartAddress;
+    lisa_CodeBlock			* LISA_NULLABLE CodeBlock;
+    lisa_Relocation			* LISA_NULLABLE Relocation;
+    lisa_CommonRelocation	* LISA_NULLABLE CommonRelocation;
+    lisa_ShortExternal		* LISA_NULLABLE ShortExternal;
+    lisa_UnitBlock			* LISA_NULLABLE UnitBlock;
+    lisa_Executable			* LISA_NULLABLE Executable;
+    lisa_VersionCtrl        * LISA_NULLABLE VersionCtrl;
+    lisa_SegmentTable		* LISA_NULLABLE SegmentTable;
+    lisa_UnitTable			* LISA_NULLABLE UnitTable;
+    lisa_SegLocation        * LISA_NULLABLE SegLocation;
+    lisa_UnitLocation		* LISA_NULLABLE UnitLocation;
+    lisa_StringBlock        * LISA_NULLABLE StringBlock;
+    lisa_PackedCode			* LISA_NULLABLE PackedCode;
+    lisa_PackTable			* LISA_NULLABLE PackTable;
+    lisa_OSData				* LISA_NULLABLE OSData;
+};
+typedef union lisa_objfile_content lisa_objfile_content;
+
+
 /*! A Lisa executable/object file. (Opaque!) */
 struct lisa_objfile;
 typedef struct lisa_objfile lisa_objfile;
 
 
 /*! A block within a Lisa executable/object file. (Opaque!) */
-struct lisa_obj_block;
-typedef struct lisa_obj_block lisa_obj_block;
+struct lisa_objfile_block;
+typedef struct lisa_objfile_block lisa_objfile_block;
 
 
 /*! Open the given Lisa executable/object file for reading. */
@@ -336,8 +364,23 @@ lisa_objfile_block_count(lisa_objfile *of);
 
 /*! Get the block at the given index. */
 LISA_EXTERN
-lisa_obj_block *
+lisa_objfile_block *
 lisa_objfile_block_at_index(lisa_objfile *of, lisa_integer idx);
+
+/*! Get the type of the block. */
+LISA_EXTERN
+lisa_obj_block_type
+lisa_objfile_block_type(lisa_objfile_block *block);
+
+/*! Get the size of the block at the given index, including header. */
+LISA_EXTERN
+lisa_longint
+lisa_objfile_block_size(lisa_objfile_block *block);
+
+/*! Get the content of the block at the given index, without header. */
+LISA_EXTERN
+lisa_objfile_content
+lisa_objfile_block_content(lisa_objfile_block *block);
 
 /*! A pointer to some data at the given offset within the file. */
 LISA_EXTERN
@@ -361,7 +404,7 @@ lisa_objfile_copy_pstring_at_offset(lisa_objfile *of,
 /*! Dump the contents of a block to `stdout`. */
 LISA_EXTERN
 void
-lisa_obj_block_dump(lisa_obj_block *block);
+lisa_obj_block_dump(lisa_objfile_block *block);
 
 /*!
  Unpack a buffer of packed code using a table. Passing
