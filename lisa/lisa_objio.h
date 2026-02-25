@@ -389,11 +389,11 @@ lisa_objfile_data_at_offset(lisa_objfile *of,
                             lisa_FileAddr file_offset);
 
 /*!
-	Gets the Pascal string at \a offset within object file \a of, into
-	\a cstr as a C string.
+    Gets the Pascal string at \a offset within object file \a of, into
+    \a cstr as a C string.
 
-	- WARNING: `cstr` must be large enough to accommodate the string;
-			   the safest thing is to just use a 256-byte buffer.
+    - WARNING: `cstr` must be large enough to accommodate the string;
+               the safest thing is to just use a 256-byte buffer.
  */
 LISA_EXTERN
 void
@@ -406,14 +406,36 @@ LISA_EXTERN
 void
 lisa_obj_block_dump(lisa_objfile_block *block);
 
+/*! Get the default packing table for Lisa code. */
+LISA_EXTERN
+lisa_PackTable *
+lisa_default_packtable(void);
+
 /*!
- Unpack a buffer of packed code using a table. Passing
- NULL for the table uses the default Lisa OS table.
+    Packs a buffer of unpacked code using a table. Passing `NULL` for
+    the table uses the default Lisa OS table.
+
+    On input, \a packed_size must be the maximum size of the packed code
+    buffer; on output, it is set to the true size of the packed code.
+ */
+LISA_EXTERN
+int
+lisa_packcode(uint8_t *packed, lisa_longint *packed_size,
+              uint8_t *unpacked, lisa_longint unpacked_size,
+              lisa_PackTable * LISA_NULLABLE table);
+
+/*!
+    Unpacks a buffer of packed code using a table. Passing `NULL` for
+    the table uses the default Lisa OS table.
+
+    On input, \a unpacked_size must be the maximum size of the unpacked
+    code buffer; on output, it is set to the true size of the unpacked
+    code.
  */
 LISA_EXTERN
 int
 lisa_unpackcode(uint8_t *packed, lisa_longint packed_size,
-                uint8_t *unpacked, lisa_longint unpacked_size,
+                uint8_t *unpacked, lisa_longint *unpacked_size,
                 lisa_PackTable * LISA_NULLABLE table);
 
 

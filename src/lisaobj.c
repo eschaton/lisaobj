@@ -31,8 +31,8 @@ enum lisaobj_command {
 typedef enum lisaobj_command lisaobj_command;
 
 
-char *program_name = NULL;
-char *objfile_path = NULL;
+const char *program_name = NULL;
+const char *objfile_path = NULL;
 lisa_objfile *objfile = NULL;
 lisaobj_command command;
 
@@ -64,7 +64,7 @@ print_usage(const char *errfmt, ...)
 
 
 int
-lisaobj_dump(int argc, char **argv)
+lisaobj_dump(int argc, const char * LISA_NULLABLE argv[])
 {
     const lisa_integer block_count = lisa_objfile_block_count(objfile);
     for (lisa_integer b = 0; b < block_count; b++) {
@@ -77,7 +77,7 @@ lisaobj_dump(int argc, char **argv)
 
 
 int
-lisaobj_extract(int argc, char **argv)
+lisaobj_extract(int argc, const char * LISA_NULLABLE argv[])
 {
     char current_module_name[9] = { 0 };
     char current_segment_name[9] = { 0 };
@@ -131,7 +131,7 @@ lisaobj_extract(int argc, char **argv)
                 // header + size + addr = 12
 
                 int unpack_err = lisa_unpackcode(packed_code, packed_code_size,
-                                                 current_code, current_code_size,
+                                                 current_code, &current_code_size,
                                                  NULL);
                 if (unpack_err != 0) {
                     // TODO: Handle error.
@@ -221,7 +221,7 @@ lisaobj_extract(int argc, char **argv)
 
 
 int
-main(int argc, char **argv)
+main(int argc, const char * LISA_NULLABLE argv[])
 {
     program_name = argv[0];
 
@@ -231,10 +231,11 @@ main(int argc, char **argv)
     }
 
     objfile_path = argv[1];
+    const char *command_name = argv[2];
 
-    if (strcmp(argv[2], "dump") == 0) {
+    if (strcmp(command_name, "dump") == 0) {
         command = lisaobj_command_dump;
-    } else if (strcmp(argv[2], "extract") == 0) {
+    } else if (strcmp(command_name, "extract") == 0) {
         command = lisaobj_command_extract;
     } else {
         print_usage("Unknown command: %s", argv[1]);
@@ -249,7 +250,7 @@ main(int argc, char **argv)
 
     int command_result;
     int command_argc = argc - 2;
-    char **command_argv = &argv[2];
+    const char **command_argv = &argv[2];
     switch (command) {
         case lisaobj_command_dump:
             command_result = lisaobj_dump(command_argc, command_argv);
