@@ -33,6 +33,13 @@ modules from an object file directly into their own appropriately-named
 files.
 
 
+## lisapack
+
+Also included is a `lisapack` utility that can be used to pack and
+unpack code using the Lisa code-compression algorithm, which is useful
+for testing.
+
+
 ## Copyright
 
 Copyright © 2026 Christopher M. Hanson. All rights reserved.

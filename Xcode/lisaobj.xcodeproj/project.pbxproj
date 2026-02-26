@@ -7,11 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9F0316772F4E6722003ACDCE /* liblisa.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F7B85EA2F4D107500803690 /* liblisa.dylib */; };
 		9F7B85F42F4D10EB00803690 /* liblisa.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F7B85EA2F4D107500803690 /* liblisa.dylib */; };
 		9F7B86082F4D115A00803690 /* libutils.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F7B85F92F4D111900803690 /* libutils.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		9F0316792F4E6739003ACDCE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F6DF59F2F43F4D50039CDCE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9F7B85E92F4D107500803690;
+			remoteInfo = liblisa;
+		};
 		9F7B86032F4D113900803690 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 9F6DF59F2F43F4D50039CDCE /* Project object */;
@@ -29,6 +37,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		9F03166D2F4E671C003ACDCE /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolder = None;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		9F6DF5A52F43F4D50039CDCE /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			dstPath = /usr/share/man/man1/;
@@ -40,6 +56,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9F03166F2F4E671C003ACDCE /* lisapack */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lisapack; sourceTree = BUILT_PRODUCTS_DIR; };
 		9F6DF5A72F43F4D50039CDCE /* lisaobj */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lisaobj; sourceTree = BUILT_PRODUCTS_DIR; };
 		9F7B85EA2F4D107500803690 /* liblisa.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblisa.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		9F7B85F92F4D111900803690 /* libutils.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libutils.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -67,11 +84,29 @@
 			);
 			target = 9F7B85F82F4D111900803690 /* libutils */;
 		};
+		9F9622792F500FE500840E44 /* Exceptions for "src" folder in "lisaobj" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				lisapack.c,
+			);
+			target = 9F6DF5A62F43F4D50039CDCE /* lisaobj */;
+		};
+		9F96227B2F500FEB00840E44 /* Exceptions for "src" folder in "lisapack" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				lisapack.c,
+			);
+			target = 9F03166E2F4E671C003ACDCE /* lisapack */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9F6DF5A92F43F4D50039CDCE /* src */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9F9622792F500FE500840E44 /* Exceptions for "src" folder in "lisaobj" target */,
+				9F96227B2F500FEB00840E44 /* Exceptions for "src" folder in "lisapack" target */,
+			);
 			name = src;
 			path = ../src;
 			sourceTree = "<group>";
@@ -97,6 +132,12 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		9F03166C2F4E671C003ACDCE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				9F0316772F4E6722003ACDCE /* liblisa.dylib in Frameworks */,
+			);
+		};
 		9F6DF5A42F43F4D50039CDCE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
@@ -135,6 +176,7 @@
 				9F6DF5A72F43F4D50039CDCE /* lisaobj */,
 				9F7B85EA2F4D107500803690 /* liblisa.dylib */,
 				9F7B85F92F4D111900803690 /* libutils.dylib */,
+				9F03166F2F4E671C003ACDCE /* lisapack */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -155,6 +197,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		9F03166E2F4E671C003ACDCE /* lisapack */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9F0316752F4E671C003ACDCE /* Build configuration list for PBXNativeTarget "lisapack" */;
+			buildPhases = (
+				9F03166B2F4E671C003ACDCE /* Sources */,
+				9F03166C2F4E671C003ACDCE /* Frameworks */,
+				9F03166D2F4E671C003ACDCE /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9F03167A2F4E6739003ACDCE /* PBXTargetDependency */,
+			);
+			name = lisapack;
+			productName = lisapack;
+			productReference = 9F03166F2F4E671C003ACDCE /* lisapack */;
+			productType = "com.apple.product-type.tool";
+		};
 		9F6DF5A62F43F4D50039CDCE /* lisaobj */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9F6DF5AE2F43F4D50039CDCE /* Build configuration list for PBXNativeTarget "lisaobj" */;
@@ -225,6 +285,9 @@
 				LastUpgradeCheck = 2620;
 				ORGANIZATIONNAME = "Christopher M. Hanson";
 				TargetAttributes = {
+					9F03166E2F4E671C003ACDCE = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					9F6DF5A62F43F4D50039CDCE = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -253,11 +316,17 @@
 				9F6DF5A62F43F4D50039CDCE /* lisaobj */,
 				9F7B85E92F4D107500803690 /* liblisa */,
 				9F7B85F82F4D111900803690 /* libutils */,
+				9F03166E2F4E671C003ACDCE /* lisapack */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		9F03166B2F4E671C003ACDCE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 		9F6DF5A32F43F4D50039CDCE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -276,6 +345,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		9F03167A2F4E6739003ACDCE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9F7B85E92F4D107500803690 /* liblisa */;
+			targetProxy = 9F0316792F4E6739003ACDCE /* PBXContainerItemProxy */;
+		};
 		9F7B86042F4D113900803690 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 9F7B85E92F4D107500803690 /* liblisa */;
@@ -289,6 +363,28 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		9F0316732F4E671C003ACDCE /* Debug configuration for PBXNativeTarget "lisapack" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = V4FN2V327V;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		9F0316742F4E671C003ACDCE /* Release configuration for PBXNativeTarget "lisapack" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = V4FN2V327V;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		9F6DF5AC2F43F4D50039CDCE /* Debug configuration for PBXProject "lisaobj" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -491,6 +587,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		9F0316752F4E671C003ACDCE /* Build configuration list for PBXNativeTarget "lisapack" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9F0316732F4E671C003ACDCE /* Debug configuration for PBXNativeTarget "lisapack" */,
+				9F0316742F4E671C003ACDCE /* Release configuration for PBXNativeTarget "lisapack" */,
+			);
+			defaultConfigurationName = Release;
+		};
 		9F6DF5A22F43F4D50039CDCE /* Build configuration list for PBXProject "lisaobj" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
