@@ -79,6 +79,15 @@ lisaobj_dump(int argc, const char * LISA_NULLABLE argv[])
 int
 lisaobj_extract(int argc, const char * LISA_NULLABLE argv[])
 {
+    bool extract_packed = false;
+
+    if (argc > 1) {
+        if (strcmp(argv[1], "-p") == 0) {
+            // -p -- preserve raw bytes
+            extract_packed = true;
+        }
+    }
+
     char current_module_name[9] = { 0 };
     char current_segment_name[9] = { 0 };
     char *first_blank;
@@ -114,28 +123,45 @@ lisaobj_extract(int argc, const char * LISA_NULLABLE argv[])
 
             case PackedCode: {
                 // A PackedCode block contains code for the current module,
-                // as well as the start address. Save those off.
+                // as well as the start address. Save those off. If the
+                // user doesn't want the code unpacked, then just put the
+                // packed code in current_code.
 
-                current_code_size = content.PackedCode->csize;
-                current_code_address = content.PackedCode->addr;
+                if (extract_packed) {
+                    current_code_size = lisa_objfile_block_size(block) - 12;
+                    // header + size + addr = 12
+                    current_code_address = content.PackedCode->addr;
 
-                assert(current_code == NULL);
-                current_code = calloc(sizeof(uint8_t), (size_t)current_code_size);
-                if (current_code == NULL) {
-                    // TODO: Handle error.
-                    assert(current_code != NULL);
-                }
+                    assert(current_code == NULL);
+                    current_code = calloc(sizeof(uint8_t), (size_t)current_code_size);
+                    if (current_code == NULL) {
+                        // TODO: Handle error.
+                        assert(current_code != NULL);
+                    }
 
-                uint8_t *packed_code = content.PackedCode->code;
-                lisa_longint packed_code_size = lisa_objfile_block_size(block) - 12;
-                // header + size + addr = 12
+                    memcpy(current_code, content.PackedCode->code, (size_t)current_code_size);
+                } else {
+                    current_code_size = content.PackedCode->csize;
+                    current_code_address = content.PackedCode->addr;
 
-                int unpack_err = lisa_unpackcode(packed_code, packed_code_size,
-                                                 current_code, &current_code_size,
-                                                 NULL);
-                if (unpack_err != 0) {
-                    // TODO: Handle error.
-                    assert(unpack_err == 0);
+                    assert(current_code == NULL);
+                    current_code = calloc(sizeof(uint8_t), (size_t)current_code_size);
+                    if (current_code == NULL) {
+                        // TODO: Handle error.
+                        assert(current_code != NULL);
+                    }
+
+                    uint8_t *packed_code = content.PackedCode->code;
+                    lisa_longint packed_code_size = lisa_objfile_block_size(block) - 12;
+                    // header + size + addr = 12
+
+                    int unpack_err = lisa_unpackcode(packed_code, packed_code_size,
+                                                     current_code, &current_code_size,
+                                                     NULL);
+                    if (unpack_err != 0) {
+                        // TODO: Handle error.
+                        assert(unpack_err == 0);
+                    }
                 }
             } break;
 
