@@ -958,9 +958,9 @@ lisa_unpackcode(uint8_t *packed, lisa_longint packed_size,
             if (flag) {
                 // Copy from table
                 uint8_t word_idx = packed[packed_idx--];
-                uint16_t word = swapu16be(words[word_idx]);
-                unpacked[unpacked_idx--] = (word & 0xff00) >> 8;
-                unpacked[unpacked_idx--] = (word & 0x00ff);
+                uint16_t word = words[word_idx];
+                unpacked[unpacked_idx--] = LOW_BYTE(word);
+                unpacked[unpacked_idx--] = HIGH_BYTE(word);
             } else {
                 // Copy directly from input
                 unpacked[unpacked_idx--] = packed[packed_idx--];

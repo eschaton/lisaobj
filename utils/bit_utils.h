@@ -25,6 +25,21 @@ UTILS_HEADER_BEGIN
 #define CLEAR_BIT(d,b) do { d &= ~(1 << (b)); } while (0);
 
 
+/*! Get the high byte of the given word. */
+static inline __attribute__((always_inline))
+uint8_t HIGH_BYTE(uint16_t word)
+{
+    return (word & 0xff00) >> 8;
+}
+
+/*! Get the low byte of the given word. */
+static inline __attribute__((always_inline))
+uint8_t LOW_BYTE(uint16_t word)
+{
+    return (word & 0x00ff);
+}
+
+
 /*!
     Dump \a buf_size hex bytes from \a buf to \a f file, indenting each
     line by a single tab character.
